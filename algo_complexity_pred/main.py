@@ -14,7 +14,8 @@ except ImportError:
     sys.exit(1)
 
 
-def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None):
+def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None, 
+                        input_file='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl'):
     """
     Process LeetCode data and generate complexity prediction prompts.
     
@@ -22,18 +23,18 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None):
         limit (int): Number of problems to process (0 for all)
         get_llm_responses (bool): Whether to send prompts to LLM
         output_file (str): Path to save results
+        input_file (str): Path to input data file
     
     Returns:
         list: Processed data with prompts and responses
     """
     template = read_yaml('algo_complexity_pred')
-    leetcode_path = '/mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl'
     
     processed_data = []
     
     try:
         count = 0
-        with open(leetcode_path, 'r', encoding='utf-8') as f:
+        with open(input_file, 'r', encoding='utf-8') as f:
             for line in f:
                 try:
                     data = json.loads(line)
@@ -56,9 +57,9 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None):
                     
                     result = {
                         'task_id': data.get('task_id', ''),
-                        'question_id': data.get('question_id', ''),
-                        'prompt': prompt
+                        'question_id': data.get('question_id', '')
                     }
+                
                     
                     # Get LLM response if requested
                     if get_llm_responses:
@@ -70,7 +71,8 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None):
                         if response:
                             complexity_data = extract_json(response)
                             result['complexity_data'] = complexity_data
-                            print(f"Extracted complexity: {complexity_data}")
+                            if limit < 5:
+                                print(f"Extracted complexity: {complexity_data}")
                     
                     processed_data.append(result)
                     
@@ -93,10 +95,32 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None):
     # Save results if output file specified
     if output_file and processed_data:
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
-                for item in processed_data:
-                    f.write(json.dumps(item, ensure_ascii=False) + '\n')
-            print(f"Saved {len(processed_data)} processed problems to {output_file}")
+            # Convert list of items to dictionary with question_id as key
+            output_dict = {}
+            for item in processed_data:
+                question_id = item.get('question_id')
+                if question_id:  # Only include items with a valid question_id
+                    output_dict[str(question_id)] = item
+            
+            # Determine file extension
+            _, ext = os.path.splitext(output_file)
+            
+            # Save as a single JSON file
+            if ext.lower() == '.json':
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json.dump(output_dict, f, ensure_ascii=False, indent=2)
+            # Save as JSONL (line-delimited JSON) for backward compatibility
+            else:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    for item in processed_data:
+                        f.write(json.dumps(item, ensure_ascii=False) + '\n')
+            
+            print(f"Saved {len(output_dict)} processed problems to {output_file}")
+            
+            # Generate stats
+            total_with_complexity = sum(1 for item in processed_data if item.get('complexity_data'))
+            print(f"Problems with complexity data: {total_with_complexity}/{len(processed_data)}")
+            
         except Exception as e:
             print(f"Error saving to output file: {e}")
     
@@ -108,14 +132,34 @@ def main():
     parser = argparse.ArgumentParser(description='Process LeetCode problems and get algorithm complexity')
     parser.add_argument('--limit', type=int, default=1, help='Number of problems to process (0 for all)')
     parser.add_argument('--llm', action='store_true', help='Get responses from LLM')
-    parser.add_argument('--output', type=str, default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/algo_complexity_pred/results.jsonl', help='Output file path')
+    parser.add_argument('--output', type=str, 
+                        default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/algo_complexity_pred/data/complexity.json', 
+                        help='Output file path (.json for question_id-keyed format, .jsonl for line-by-line)')
+    parser.add_argument('--input', type=str,
+                        default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl',
+                        help='Input file path')
+    parser.add_argument('--format', type=str, choices=['json', 'jsonl'], 
+                        help='Override output format (json: que1stion_id-keyed, jsonl: line-by-line)')
     args = parser.parse_args()
     
-    print("\nProcessing LeetCode data...")
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(args.output)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Created output directory: {output_dir}")
+    
+    # Override output file extension if format is specified
+    if args.format:
+        base, _ = os.path.splitext(args.output)
+        args.output = f"{base}.{args.format}"
+        print(f"Output format set to {args.format}, file will be saved as {args.output}")
+    
+    print(f"\nProcessing LeetCode data from {args.input}...")
     process_leetcode_data(
         limit=args.limit,
         get_llm_responses=args.llm,
-        output_file=args.output
+        output_file=args.output,
+        input_file=args.input
     )
     
     print("\nDone!")
