@@ -111,7 +111,6 @@ def main():
     parser.add_argument('--output', type=str, default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/algo_complexity_pred/results.jsonl', help='Output file path')
     args = parser.parse_args()
     
-    args.llm = True
     print("\nProcessing LeetCode data...")
     process_leetcode_data(
         limit=args.limit,
