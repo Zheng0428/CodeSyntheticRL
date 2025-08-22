@@ -5,9 +5,9 @@ import os
 import numpy as np
 
 if os.getenv("SANDBOX_ENDPOINT", None) is not None:
-    from aiic_verl.utils.sandbox.local_sandbox import parallel_sandbox
+    from sandbox.local_sandbox import parallel_sandbox
 else:
-    from aiic_verl.utils.sandbox.internal_sandbox import parallel_sandbox
+    from sandbox.internal_sandbox import parallel_sandbox
 
 MAX_CHAR_DISPLAY = 2048
 
