@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
     from utils import extract_json, read_yaml, get_llm_response, get_llm_responses_batch
+    from envs import LEETCODE_PATH
 except ImportError:
     print("Could not import functions from utils.py. Make sure it exists in the parent directory.")
     # Fallback implementations would go here if needed
@@ -228,7 +229,7 @@ def main():
                         default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/algo_complexity_pred/data/complexity.json', 
                         help='Output file path (.json for question_id-keyed format, .jsonl for line-by-line)')
     parser.add_argument('--input', type=str,
-                        default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl',
+                        default=LEETCODE_PATH,
                         help='Input file path')
     parser.add_argument('--max-retries', type=int, default=3, 
                         help='Maximum retry attempts for failed extractions')
