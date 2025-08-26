@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 # Add parent directory to path to import utils
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
-    from utils import extract_json, read_yaml, get_llm_response
+    from utils import extract_json, read_yaml, get_llm_response, get_llm_responses_batch
 except ImportError:
     print("Could not import functions from utils.py. Make sure it exists in the parent directory.")
     # Fallback implementations would go here if needed
@@ -31,6 +31,7 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None,
     template = read_yaml('algo_complexity_pred')
     
     processed_data = []
+    prompts = []
     
     try:
         count = 0
@@ -59,22 +60,11 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None,
                         'task_id': data.get('task_id', ''),
                         'question_id': data.get('question_id', '')
                     }
-                
-                    
-                    # Get LLM response if requested
-                    if get_llm_responses:
-                        print(f"\nSending prompt for problem {result['task_id']} to LLM...")
-                        response = get_llm_response(prompt, temperature=0.1)
-                        result['response'] = response
-                        
-                        # Extract complexity data
-                        if response:
-                            complexity_data = extract_json(response)
-                            result['complexity_data'] = complexity_data
-                            if limit < 5:
-                                print(f"Extracted complexity: {complexity_data}")
                     
                     processed_data.append(result)
+                    
+                    if get_llm_responses:
+                        prompts.append(prompt)
                     
                     if count == 0:
                         print("\nExample prompt:")
@@ -91,6 +81,29 @@ def process_leetcode_data(limit=1, get_llm_responses=False, output_file=None,
                     continue
     except Exception as e:
         print(f"Error reading LeetCode data: {e}")
+    
+    # Get LLM responses if requested (batch processing)
+    if get_llm_responses and prompts:
+        print(f"\nSending {len(prompts)} prompts to LLM in batch mode...")
+        responses = get_llm_responses_batch(
+            prompts=prompts,
+            temperature=0.7,
+            batch_size=100,
+            max_concurrency=5,
+            show_progress=True
+        )
+        
+        # Add responses to processed_data
+        for i, response in enumerate(responses):
+            if i < len(processed_data):
+                processed_data[i]['response'] = response
+                
+                # Extract complexity data
+                if response:
+                    complexity_data = extract_json(response)
+                    processed_data[i]['complexity_data'] = complexity_data
+                    if limit < 5:
+                        print(f"Extracted complexity for {processed_data[i]['task_id']}: {complexity_data}")
     
     # Save results if output file specified
     if output_file and processed_data:
