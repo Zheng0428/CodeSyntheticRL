@@ -464,5 +464,74 @@ def main():
     
     print("\nAll tests completed.")
 
+# Data processing utilities (added for URL processing tasks)
+import pandas as pd
+from urllib.parse import urlparse
+import gc
+
+def extract_root_domain(url):
+    """提取根域名（用于URL处理）"""
+    if not url or pd.isna(url):
+        return None, None
+        
+    try:
+        # 确保URL有协议
+        if not url.startswith(('http://', 'https://', 'ftp://', 'ftps://')):
+            url = 'http://' + url
+            
+        parsed = urlparse(url)
+        protocol = parsed.scheme
+        domain = parsed.netloc.lower()
+        
+        # 移除端口号
+        if ':' in domain:
+            domain = domain.split(':')[0]
+        
+        # 提取根域名（去掉www等前缀）
+        domain_parts = domain.split('.')
+        if len(domain_parts) >= 2:
+            if domain_parts[0] == 'www':
+                root_domain = '.'.join(domain_parts[1:])
+            else:
+                root_domain = domain
+        else:
+            root_domain = domain
+            
+        return protocol, root_domain
+    except Exception as e:
+        return None, None
+
+def get_memory_usage():
+    """获取当前内存使用情况（MB）"""
+    import psutil
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / 1024 / 1024
+
+def force_gc():
+    """强制垃圾回收"""
+    gc.collect()
+
+def safe_parquet_read_batches(file_path, chunk_size=50000):
+    """
+    安全的parquet文件分批读取
+    返回批次迭代器
+    """
+    try:
+        # 优先使用pyarrow
+        import pyarrow.parquet as pq
+        parquet_file = pq.ParquetFile(file_path)
+        for batch in parquet_file.iter_batches(batch_size=chunk_size):
+            yield batch.to_pandas()
+    except ImportError:
+        # 降级使用pandas
+        print(f"警告：未安装pyarrow，使用pandas读取 {file_path}")
+        df = pd.read_parquet(file_path)
+        total_rows = len(df)
+        for start_idx in range(0, total_rows, chunk_size):
+            end_idx = min(start_idx + chunk_size, total_rows)
+            yield df.iloc[start_idx:end_idx]
+        del df
+        force_gc()
+
 if __name__ == "__main__":
     main()

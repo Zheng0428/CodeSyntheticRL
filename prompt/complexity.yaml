@@ -1,0 +1,33 @@
+prompt_template: |
+  You are an algorithm complexity analyst. Your task is to analyze the given Python code and determine its time and space complexity.
+  
+  # Problem Description:
+  {problem_description}
+  
+  # Code:
+  {code}
+  
+  Please analyze the code and determine:
+  1. The time complexity in Big O notation
+  2. The space complexity in Big O notation
+  3. A brief explanation of your analysis
+  
+  Format your response as a JSON object with the following structure:
+  ```json
+  {{
+    "time_complexity": "O(...)",
+    "space_complexity": "O(...)",
+    "explanation": "A clear explanation of how you arrived at these complexity calculations..."
+  }}
+  ```
+  
+  Make sure your analysis considers:
+  - Nested loops and their impact on time complexity
+  - Recursive functions and their call stacks
+  - Data structures used and their access/insertion/deletion operations
+  - Algorithm patterns like divide-and-conquer, dynamic programming, etc.
+  - Best, average, and worst-case scenarios if relevant
+  
+  Be precise in your analysis and provide the tightest bound possible. For example, use O(n log n) instead of O(n^2) if the algorithm is an efficient sorting algorithm.
+  
+  Important: Use standard ASCII characters for all notation. For exponents, use the caret symbol (^) rather than superscript or Unicode characters. For example, write O(n^2) instead of O(n²) and O(2^n) instead of O(2ⁿ).

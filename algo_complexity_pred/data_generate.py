@@ -263,3 +263,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python data_generate.py --llm --limit 0 --format json --max-retries 3

@@ -1,33 +1,70 @@
 prompt_template: |
-  You are an algorithm complexity analyst. Your task is to analyze the given Python code and determine its time and space complexity.
-  
-  # Problem Description:
-  {problem_description}
-  
-  # Code:
+  Based on the following problem and solution, generate 1-3 diverse, challenging questions about algorithm complexity analysis along with comprehensive answers.
+
+  **Problem Description**: {problem_description}
+
+  **Solution Code**:
+  ```python
   {code}
-  
-  Please analyze the code and determine:
-  1. The time complexity in Big O notation
-  2. The space complexity in Big O notation
-  3. A brief explanation of your analysis
-  
-  Format your response as a JSON object with the following structure:
-  ```json
-  {{
-    "time_complexity": "O(...)",
-    "space_complexity": "O(...)",
-    "explanation": "A clear explanation of how you arrived at these complexity calculations..."
-  }}
   ```
-  
-  Make sure your analysis considers:
-  - Nested loops and their impact on time complexity
-  - Recursive functions and their call stacks
-  - Data structures used and their access/insertion/deletion operations
-  - Algorithm patterns like divide-and-conquer, dynamic programming, etc.
-  - Best, average, and worst-case scenarios if relevant
-  
-  Be precise in your analysis and provide the tightest bound possible. For example, use O(n log n) instead of O(n^2) if the algorithm is an efficient sorting algorithm.
-  
-  Important: Use standard ASCII characters for all notation. For exponents, use the caret symbol (^) rather than superscript or Unicode characters. For example, write O(n^2) instead of O(n²) and O(2^n) instead of O(2ⁿ).
+
+  **Known Complexity Analysis**:
+  - Time Complexity: {time_complexity}
+  - Space Complexity: {space_complexity}
+  - Explanation: {explanation}
+
+  **Task**: Generate 1-3 challenging questions about this algorithm's complexity along with detailed answers. Each question should be:
+  1. **Diverse**: Choose from various question types (comparison, optimization, trade-offs, edge cases, variations, theoretical analysis, etc.)
+  2. **High difficulty**: Require deep understanding of complexity analysis
+  3. **Specific**: Focus on particular aspects of the algorithm
+
+  **Question Types to Choose From**:
+  - Complexity comparison with alternative approaches
+  - Analysis of space-time trade-offs
+  - Best/average/worst case scenario analysis
+  - Impact of input characteristics on complexity
+  - Optimization possibilities and their complexity implications
+  - Recursive relation analysis
+  - Amortized complexity analysis
+  - Complexity under different constraints or modifications
+  - Memory access patterns and cache complexity
+  - Parallel/distributed complexity considerations
+
+  **Output Format**:
+  ===QA_PAIRS_START===
+  ===PAIR_START===
+  PAIR_ID: 1
+  ===QUESTION_START===
+  [Your first challenging, specific question about complexity]
+  ===QUESTION_END===
+  ===ANSWER_START===
+  [Comprehensive answer with detailed analysis, including mathematical reasoning, examples if helpful, and clear explanation of complexity concepts]
+  ===ANSWER_END===
+  ===PAIR_END===
+
+  ===PAIR_START===
+  PAIR_ID: 2
+  ===QUESTION_START===
+  [Your second challenging, specific question about complexity (if applicable)]
+  ===QUESTION_END===
+  ===ANSWER_START===
+  [Comprehensive answer with detailed analysis]
+  ===ANSWER_END===
+  ===PAIR_END===
+
+  ===PAIR_START===
+  PAIR_ID: 3
+  ===QUESTION_START===
+  [Your third challenging, specific question about complexity (if applicable)]
+  ===QUESTION_END===
+  ===ANSWER_START===
+  [Comprehensive answer with detailed analysis]
+  ===ANSWER_END===
+  ===PAIR_END===
+  ===QA_PAIRS_END===
+
+  **Requirements**:
+  - Generate 1-3 pairs based on the complexity and richness of the algorithm
+  - Each question should focus on different aspects of complexity analysis
+  - Questions should require deep algorithmic thinking and expert-level analysis
+  - Answers should be comprehensive and demonstrate mastery of complexity concepts
