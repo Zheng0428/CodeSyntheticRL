@@ -231,7 +231,7 @@ def main():
     parser.add_argument('--test', action='store_true', help='测试模式，只处理少量文件')
     parser.add_argument('--data-dir', default="/mnt/hdfs/tiktok_aiic_new/user/liuqian/opencoder_web_reprocessed/", 
                        help='数据目录路径')
-    parser.add_argument('--output', default="/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/data_process/url_stats.json",
+    parser.add_argument('--output', default="/mnt/hdfs/tiktok_aiic_new/user/tianyu/opencoder/dataset/url_stats.json",
                        help='输出文件路径')
     parser.add_argument('--min-freq', type=int, default=2, help='域名最小频次阈值（默认2）')
     parser.add_argument('--chunk-size', type=int, default=10000, help='分块大小（默认10000行）')

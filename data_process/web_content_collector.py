@@ -307,7 +307,7 @@ class DomainBasedCollector:
 def main():
     parser = argparse.ArgumentParser(description='按域名分类收集网页内容')
     parser.add_argument('--stats-file', 
-                       default='/mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/data_process/url_stats.json',
+                       default='/mnt/hdfs/tiktok_aiic_new/user/tianyu/opencoder/dataset/url_stats.json',
                        help='URL统计文件路径')
     parser.add_argument('--data-dir', 
                        default='/mnt/hdfs/tiktok_aiic_new/user/liuqian/opencoder_web_reprocessed/',
