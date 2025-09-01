@@ -157,10 +157,10 @@ def process_directory_files(dir_args):
     """
     处理单个目录下的所有JSON文件并合并（多进程版本）
     """
-    directory_path, files_in_dir, output_suffix, verbose = dir_args
-    return _process_directory_files(directory_path, files_in_dir, output_suffix, verbose)
+    directory_path, files_in_dir, output_suffix, verbose, max_files = dir_args
+    return _process_directory_files(directory_path, files_in_dir, output_suffix, verbose, max_files)
 
-def _process_directory_files(directory_path, files_in_dir, output_suffix="_markdown", verbose=True):
+def _process_directory_files(directory_path, files_in_dir, output_suffix="_markdown", verbose=True, max_files=0):
     """
     处理单个目录下的所有JSON文件并合并为一个文件
     """
@@ -172,8 +172,15 @@ def _process_directory_files(directory_path, files_in_dir, output_suffix="_markd
         
         directory_name = os.path.basename(directory_path)
         
-        if verbose:
-            print(f"  处理目录: {directory_name} ({len(files_in_dir)} 个文件)")
+        # 限制处理的文件数量
+        if max_files > 0 and len(files_in_dir) > max_files:
+            original_count = len(files_in_dir)
+            files_in_dir = files_in_dir[:max_files]
+            if verbose:
+                print(f"  处理目录: {directory_name} (限制处理 {len(files_in_dir)}/{original_count} 个文件)")
+        else:
+            if verbose:
+                print(f"  处理目录: {directory_name} ({len(files_in_dir)} 个文件)")
         
         # 处理目录下的每个JSON文件
         for json_file in files_in_dir:
@@ -275,12 +282,18 @@ def main():
                        help='测试模式，只处理前5个文件')
     parser.add_argument('--verbose', action='store_true',
                        help='显示详细输出')
+    parser.add_argument('--max-files-per-dir', type=int, default=0,
+                       help='每个目录最多处理的JSON文件数量（0表示处理全部，默认0）')
     
     args = parser.parse_args()
     
     print("=== HTML转Markdown批处理工具 ===")
     print(f"输入目录: {args.input_dir}")
     print(f"输出后缀: {args.output_suffix}")
+    if args.max_files_per_dir > 0:
+        print(f"每目录最大文件数: {args.max_files_per_dir}")
+    else:
+        print("每目录最大文件数: 无限制")
     
     # 检查依赖
     try:
@@ -344,7 +357,7 @@ def main():
     if use_multiprocessing:
         # 多进程模式
         args_list = [
-            (directory_path, files_in_dir, args.output_suffix, args.verbose)
+            (directory_path, files_in_dir, args.output_suffix, args.verbose, args.max_files_per_dir)
             for directory_path, files_in_dir in grouped_files.items()
         ]
         
@@ -359,7 +372,7 @@ def main():
     else:
         # 单进程模式
         for directory_path, files_in_dir in tqdm(grouped_files.items(), desc="处理目录"):
-            result = _process_directory_files(directory_path, files_in_dir, args.output_suffix, args.verbose)
+            result = _process_directory_files(directory_path, files_in_dir, args.output_suffix, args.verbose, args.max_files_per_dir)
             results.append(result)
     
     # 统计结果
