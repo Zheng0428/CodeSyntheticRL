@@ -4,17 +4,17 @@ import sys
 import argparse
 import re
 from typing import Dict, Any, Optional, List
+import yaml
 
 # Add parent directory to path to import utils
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
-    from utils import extract_json, read_yaml, get_llm_response, get_llm_responses_batch
+    from utils import extract_json, read_yaml, get_llm_response, get_llm_responses_batch, register_forward
     from envs import LEETCODE_PATH
 except ImportError:
     print("Could not import functions from utils.py. Make sure it exists in the parent directory.")
     # Fallback implementations would go here if needed
     sys.exit(1)
-
 
 def parse_qa_pairs_from_response(response_text: str) -> List[Dict[str, str]]:
     """
@@ -283,37 +283,24 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
     
     return qa_pairs
 
-
-def main():
+@register_forward("algo_complexity_pred")
+def forward(input_path=LEETCODE_PATH, output_path='./algo_complexity_pred/data/complexity_qa_pairs.jsonl'):
     """Main function to execute the script."""
-    parser = argparse.ArgumentParser(description='Generate QA pairs for algorithm complexity prediction')
-    parser.add_argument('--complexity-data', type=str, 
-                        default='./algo_complexity_pred/data/complexity.json',
-                        help='Path to complexity data file')
-    parser.add_argument('--leetcode-data', type=str,
-                        default=LEETCODE_PATH,
-                        help='Path to LeetCode data file')
-    parser.add_argument('--output', type=str, 
-                        default='./algo_complexity_pred/data/complexity_qa_pairs.jsonl', 
-                        help='Output file path for QA pairs')
-    parser.add_argument('--limit', type=int, default=0, 
-                        help='Number of problems to process (0 for all)')
-    parser.add_argument('--llm', action='store_true',
-                        help='Use LLM to generate diverse, challenging questions')
-    
-    args = parser.parse_args()
+
+    with open("config/algo_complexity_pred.yaml", "r", encoding="utf-8") as f:
+        args = yaml.safe_load(f)
     
     print(f"Generating QA pairs for algorithm complexity prediction...")
     print(f"Complexity data: {args.complexity_data}")
-    print(f"LeetCode data: {args.leetcode_data}")
-    print(f"Output file: {args.output}")
+    print(f"LeetCode data: {input_path}")
+    print(f"Output file: {output_path}")
     print(f"Limit: {args.limit if args.limit > 0 else 'No limit'}")
     print(f"LLM generation: {'Enabled' if args.llm else 'Disabled (basic template)'}")
     
     qa_pairs = generate_qa_pairs(
         complexity_data_file=args.complexity_data,
-        leetcode_file=args.leetcode_data,
-        output_file=args.output,
+        leetcode_file=input_path,
+        output_file=output_path,
         limit=args.limit,
         get_llm_responses=args.llm
     )
@@ -346,4 +333,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    forward()
