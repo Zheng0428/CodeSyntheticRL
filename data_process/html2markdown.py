@@ -116,11 +116,19 @@ def find_json_files(input_dir, exclude_suffix="_markdown"):
     
     return json_files
 
-def cleanup_existing_output_files(input_dir, output_suffix):
+def cleanup_existing_output_files(input_dir, output_suffix, cleanup_mode=True):
     """
     清理目录下所有以指定后缀结尾的文件
+    
+    Args:
+        input_dir: 输入目录
+        output_suffix: 输出文件后缀
+        cleanup_mode: True表示删除模式，False表示保留模式
     """
     deleted_count = 0
+    
+    if not cleanup_mode:
+        return deleted_count
     
     # 遍历所有子目录
     for domain_dir in os.listdir(input_dir):
@@ -152,6 +160,38 @@ def group_files_by_directory(json_files):
         grouped_files[directory].append(file_path)
     
     return grouped_files
+
+def filter_unprocessed_directories(grouped_files, output_suffix, cleanup_mode=True):
+    """
+    过滤出未处理的目录（在保留模式下跳过已有输出文件的目录）
+    
+    Args:
+        grouped_files: 按目录分组的文件字典
+        output_suffix: 输出文件后缀
+        cleanup_mode: True表示删除模式（处理所有目录），False表示保留模式（跳过已处理目录）
+    """
+    if cleanup_mode:
+        # 删除模式：处理所有目录
+        return grouped_files
+    
+    # 保留模式：跳过已有输出文件的目录
+    unprocessed_dirs = {}
+    skipped_count = 0
+    
+    for directory_path, files_in_dir in grouped_files.items():
+        directory_name = os.path.basename(directory_path)
+        output_file = os.path.join(directory_path, f"{directory_name}{output_suffix}.json")
+        
+        if os.path.exists(output_file):
+            skipped_count += 1
+            continue  # 跳过已处理的目录
+        
+        unprocessed_dirs[directory_path] = files_in_dir
+    
+    if skipped_count > 0:
+        print(f"✓ 跳过 {skipped_count} 个已处理的目录")
+    
+    return unprocessed_dirs
 
 def process_directory_files(dir_args):
     """
@@ -284,12 +324,15 @@ def main():
                        help='显示详细输出')
     parser.add_argument('--max-files-per-dir', type=int, default=0,
                        help='每个目录最多处理的JSON文件数量（0表示处理全部，默认0）')
+    parser.add_argument('--cleanup-mode', action='store_true',
+                       help='清理模式：删除所有历史处理文件并重新处理所有目录（默认为保留模式）')
     
     args = parser.parse_args()
     
     print("=== HTML转Markdown批处理工具 ===")
     print(f"输入目录: {args.input_dir}")
     print(f"输出后缀: {args.output_suffix}")
+    print(f"运行模式: {'清理模式（删除历史文件）' if args.cleanup_mode else '保留模式（跳过已处理目录）'}")
     if args.max_files_per_dir > 0:
         print(f"每目录最大文件数: {args.max_files_per_dir}")
     else:
@@ -308,13 +351,16 @@ def main():
         print(f"✗ 输入目录不存在: {args.input_dir}")
         return
     
-    # 清理已存在的输出文件
-    print(f"\n清理已存在的{args.output_suffix}文件...")
-    deleted_count = cleanup_existing_output_files(args.input_dir, args.output_suffix)
-    if deleted_count > 0:
-        print(f"✓ 已删除 {deleted_count} 个旧的输出文件")
+    # 根据模式决定是否清理已存在的输出文件
+    if args.cleanup_mode:
+        print(f"\n清理已存在的{args.output_suffix}文件...")
+        deleted_count = cleanup_existing_output_files(args.input_dir, args.output_suffix, cleanup_mode=True)
+        if deleted_count > 0:
+            print(f"✓ 已删除 {deleted_count} 个旧的输出文件")
+        else:
+            print("✓ 没有找到需要清理的文件")
     else:
-        print("✓ 没有找到需要清理的文件")
+        print(f"\n保留模式：保留已存在的{args.output_suffix}文件，跳过已处理目录")
     
     # 查找所有JSON文件（排除输出文件）
     print("\n查找JSON文件...")
@@ -326,6 +372,10 @@ def main():
     
     # 按目录分组文件
     grouped_files = group_files_by_directory(json_files)
+    total_dirs_found = len(grouped_files)
+    
+    # 根据模式过滤目录
+    grouped_files = filter_unprocessed_directories(grouped_files, args.output_suffix, args.cleanup_mode)
     
     if args.test:
         # 测试模式：只处理前几个目录
@@ -333,7 +383,11 @@ def main():
         grouped_files = {k: v for k, v in grouped_files.items() if k in test_dirs}
         print(f"测试模式：处理 {len(grouped_files)} 个目录")
     else:
-        print(f"找到 {len(json_files)} 个JSON文件，分布在 {len(grouped_files)} 个目录中")
+        if args.cleanup_mode:
+            print(f"找到 {len(json_files)} 个JSON文件，分布在 {total_dirs_found} 个目录中")
+        else:
+            print(f"找到 {len(json_files)} 个JSON文件，分布在 {total_dirs_found} 个目录中")
+            print(f"待处理目录: {len(grouped_files)} 个（跳过了 {total_dirs_found - len(grouped_files)} 个已处理目录）")
     
     # 显示分组信息
     if args.verbose:
