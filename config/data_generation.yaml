@@ -1,0 +1,6 @@
+forward: algo_complexity_pred
+reward_score: algo_complexity_pred
+
+input_path: /mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl
+output_path: /mnt/bn/tiktok-mm-5/aiic/users/tianyu/CodeSyntheticRL/algo_complexity_pred/data/complexity.json
+

@@ -7,10 +7,10 @@ if os.getenv("SANDBOX_ENDPOINT", None) is not None:
     from sandbox.local_sandbox import parallel_sandbox
 else:
     from sandbox.internal_sandbox import parallel_sandbox
-
+from utils import register_reward_score
 MAX_CHAR_DISPLAY = 2048
 
-
+@register_reward_score("algo_complexity_pred")
 def compute_score(solution_str, ground_truth, extra_info):
     """
     ground_truth format:

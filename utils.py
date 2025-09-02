@@ -533,5 +533,37 @@ def safe_parquet_read_batches(file_path, chunk_size=50000):
         del df
         force_gc()
 
+from collections.abc import Iterable
+from typing import Callable
+# 存储模型与 forward 函数的映射
+_forward_registry = {}
+
+# 注册函数的装饰器
+def register_forward(model_name: Union[str, Iterable[str]]):
+    
+    def decorator(func: Callable):
+        names = [model_name] if isinstance(model_name, str) else model_name
+        if not names or not all(isinstance(name, str) for name in names):
+            raise ValueError("model_names must be a non-empty string or iterable of strings")
+        for name in names:
+            _forward_registry[name] = func
+        return func
+    return decorator
+
+# 存储模型与 reward_score 函数的映射
+_reward_score_registry = {}
+
+# 注册 reward_score 函数的装饰器
+def register_reward_score(model_name: Union[str, Iterable[str]]):
+    
+    def decorator(func: Callable):
+        names = [model_name] if isinstance(model_name, str) else model_name
+        if not names or not all(isinstance(name, str) for name in names):
+            raise ValueError("model_names must be a non-empty string or iterable of strings")
+        for name in names:
+            _reward_score_registry[name] = func
+        return func
+    return decorator
+
 if __name__ == "__main__":
     main()
