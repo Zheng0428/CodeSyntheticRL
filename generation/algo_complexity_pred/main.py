@@ -10,7 +10,6 @@ import yaml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
     from utils import extract_json, read_yaml, get_llm_response, get_llm_responses_batch, register_forward
-    from envs import LEETCODE_PATH
 except ImportError:
     print("Could not import functions from utils.py. Make sure it exists in the parent directory.")
     # Fallback implementations would go here if needed
@@ -284,25 +283,24 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
     return qa_pairs
 
 @register_forward("algo_complexity_pred")
-def forward(input_path=LEETCODE_PATH, output_path='./algo_complexity_pred/data/complexity_qa_pairs.jsonl'):
+def forward(args):
     """Main function to execute the script."""
-
-    with open("config/algo_complexity_pred.yaml", "r", encoding="utf-8") as f:
-        args = yaml.safe_load(f)
+    input_path=args['input_path']
+    output_path=args['output_path']
     
     print(f"Generating QA pairs for algorithm complexity prediction...")
-    print(f"Complexity data: {args.complexity_data}")
+    print(f"Complexity data: {args['complexity_data']}")
     print(f"LeetCode data: {input_path}")
     print(f"Output file: {output_path}")
-    print(f"Limit: {args.limit if args.limit > 0 else 'No limit'}")
-    print(f"LLM generation: {'Enabled' if args.llm else 'Disabled (basic template)'}")
+    print(f"Limit: {args['limit'] if args['limit'] > 0 else 'No limit'}")
+    print(f"LLM generation: {'Enabled' if args['llm'] else 'Disabled (basic template)'}")
     
     qa_pairs = generate_qa_pairs(
-        complexity_data_file=args.complexity_data,
+        complexity_data_file=args['complexity_data'],
         leetcode_file=input_path,
         output_file=output_path,
-        limit=args.limit,
-        get_llm_responses=args.llm
+        limit=args['limit'],
+        get_llm_responses=args['llm']
     )
     
     if qa_pairs:

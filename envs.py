@@ -10,4 +10,3 @@ API_KEY = 'x1Whe5nkEi8T2CGEqn6s9F7jtPGUxI7E_GPT_AK'
 MODEL = "gpt-4o-2024-11-20" # gcp-claude37-sonnet/gemini-2.5-pro-preview-05-06/gpt-4o-2024-11-20
 MAX_TOKENS = 16000
 SYSTEM_PROMPT = "You are a very helpful assistant."
-LEETCODE_PATH = '/mnt/bn/tiktok-mm-5/aiic/users/tianyu/dataset/CodeSyntheticData/merged_leetcode.jsonl'
