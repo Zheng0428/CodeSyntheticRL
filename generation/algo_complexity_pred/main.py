@@ -15,53 +15,58 @@ except ImportError:
     # Fallback implementations would go here if needed
     sys.exit(1)
 
-def parse_qa_pairs_from_response(response_text: str) -> List[Dict[str, str]]:
+def parse_queries_from_response(response_text: str) -> List[Dict[str, str]]:
     """
-    Parse QA pairs from the formatted LLM response.
+    Parse queries from the formatted LLM response.
     
     Args:
-        response_text (str): The LLM response containing formatted QA pairs
+        response_text (str): The LLM response containing formatted queries
     
     Returns:
-        List[Dict[str, str]]: List of parsed QA pairs
+        List[Dict[str, str]]: List of parsed queries with complexity type and ground truth
     """
-    qa_pairs = []
+    queries = []
     
     if not response_text:
-        return qa_pairs
+        return queries
     
-    # Extract content between QA_PAIRS_START and QA_PAIRS_END
-    qa_section_match = re.search(r'===QA_PAIRS_START===(.*?)===QA_PAIRS_END===', response_text, re.DOTALL)
-    if not qa_section_match:
-        return qa_pairs
+    # Extract content between QUERIES_START and QUERIES_END
+    queries_section_match = re.search(r'===QUERIES_START===(.*?)===QUERIES_END===', response_text, re.DOTALL)
+    if not queries_section_match:
+        return queries
     
-    qa_section = qa_section_match.group(1)
+    queries_section = queries_section_match.group(1)
     
-    # Find all pairs
-    pair_pattern = r'===PAIR_START===(.*?)===PAIR_END==='
-    pair_matches = re.findall(pair_pattern, qa_section, re.DOTALL)
+    # Find all queries
+    query_pattern = r'===QUERY_START===(.*?)===QUERY_END==='
+    query_matches = re.findall(query_pattern, queries_section, re.DOTALL)
     
-    for pair_content in pair_matches:
-        # Extract PAIR_ID
-        pair_id_match = re.search(r'PAIR_ID:\s*(\d+)', pair_content)
-        pair_id = pair_id_match.group(1) if pair_id_match else "unknown"
+    for query_content in query_matches:
+        # Extract QUERY_ID
+        query_id_match = re.search(r'QUERY_ID:\s*(\d+)', query_content)
+        query_id = query_id_match.group(1) if query_id_match else "unknown"
         
-        # Extract question
-        question_match = re.search(r'===QUESTION_START===(.*?)===QUESTION_END===', pair_content, re.DOTALL)
-        question = question_match.group(1).strip() if question_match else ""
+        # Extract COMPLEXITY_TYPE
+        complexity_type_match = re.search(r'COMPLEXITY_TYPE:\s*([A-Z]+)', query_content)
+        complexity_type = complexity_type_match.group(1) if complexity_type_match else ""
         
-        # Extract answer
-        answer_match = re.search(r'===ANSWER_START===(.*?)===ANSWER_END===', pair_content, re.DOTALL)
-        answer = answer_match.group(1).strip() if answer_match else ""
+        # Extract QUERY (now comes before GROUND_TRUTH)
+        query_match = re.search(r'QUERY:\s*(.*?)(?=\s*GROUND_TRUTH:)', query_content, re.DOTALL)
+        query = query_match.group(1).strip() if query_match else ""
         
-        if question and answer:
-            qa_pairs.append({
-                "pair_id": pair_id,
-                "question": question,
-                "answer": answer
+        # Extract GROUND_TRUTH (now comes after QUERY)
+        ground_truth_match = re.search(r'GROUND_TRUTH:\s*([^\n]+)', query_content)
+        ground_truth = ground_truth_match.group(1).strip() if ground_truth_match else ""
+        
+        if query and complexity_type and ground_truth:
+            queries.append({
+                "query_id": query_id,
+                "complexity_type": complexity_type,
+                "ground_truth": ground_truth,
+                "query": query
             })
     
-    return qa_pairs
+    return queries
 
 
 def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file=None, limit=0, get_llm_responses=False):
@@ -212,21 +217,23 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
                 code = info['code']
                 
                 if response:
-                    # Parse the LLM response to extract multiple QA pairs
-                    parsed_pairs = parse_qa_pairs_from_response(response)
+                    # Parse the LLM response to extract multiple queries
+                    parsed_queries = parse_queries_from_response(response)
                     
-                    for parsed_pair in parsed_pairs:
+                    for parsed_query in parsed_queries:
                         qa_pair = {
-                            "id": f"complexity_{question_id}_{parsed_pair['pair_id']}",
+                            "id": f"complexity_{question_id}_{parsed_query['query_id']}",
                             "question_id": int(question_id),
                             "task_id": leetcode_item.get('task_id', ''),
                             "difficulty": leetcode_item.get('difficulty', ''),
                             "tags": leetcode_item.get('tags', []),
-                            "question": parsed_pair['question'],
-                            "answer": parsed_pair['answer'],
+                            "question": parsed_query['query'],
+                            "answer": parsed_query['ground_truth'],
                             "metadata": {
                                 "type": "algorithm_complexity_prediction",
-                                "pair_id": parsed_pair['pair_id'],
+                                "query_id": parsed_query['query_id'],
+                                "complexity_type": parsed_query['complexity_type'],
+                                "ground_truth": parsed_query['ground_truth'],
                                 "problem_description": problem_description,
                                 "code": code,
                                 "original_time_complexity": complexity_info_data.get('time_complexity', ''),
@@ -236,8 +243,8 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
                         }
                         qa_pairs.append(qa_pair)
                     
-                    if i == 0 and parsed_pairs:
-                        print(f"\nGenerated {len(parsed_pairs)} QA pairs from LLM response for problem {question_id}")
+                    if i == 0 and parsed_queries:
+                        print(f"\nGenerated {len(parsed_queries)} queries from LLM response for problem {question_id}")
                 else:
                     print(f"No LLM response for problem {question_id}")
     
@@ -302,24 +309,60 @@ def forward(args):
         limit=args['limit'],
         get_llm_responses=args['llm']
     )
-    
+    # qa_pairs = []
+    # with open(output_path, 'r') as f:
+    #     for data in f:
+    #         qa_pairs.append(json.loads(data))
     if qa_pairs:
         print("\nQA pair generation completed successfully!")
         print(f"Generated {len(qa_pairs)} QA pairs")
         
         # Show statistics
-        complexities = {}
+        time_complexities = {}
+        space_complexities = {}
+        complexity_types = {}
         difficulties = {}
-        for qa in qa_pairs:
-            time_comp = qa['metadata']['time_complexity']
-            difficulty = qa.get('difficulty', 'Unknown')
-            
-            complexities[time_comp] = complexities.get(time_comp, 0) + 1
-            difficulties[difficulty] = difficulties.get(difficulty, 0) + 1
         
-        print("\nTime complexity distribution:")
-        for comp, count in sorted(complexities.items()):
-            print(f"  {comp}: {count}")
+        for qa in qa_pairs:
+            difficulty = qa.get('difficulty', 'Unknown')
+            difficulties[difficulty] = difficulties.get(difficulty, 0) + 1
+            
+            # Handle both old format (basic template) and new format (LLM generated)
+            if qa['metadata'].get('llm_generated', False):
+                # New format with complexity_type and ground_truth
+                complexity_type = qa['metadata'].get('complexity_type', 'Unknown')
+                ground_truth = qa['metadata'].get('ground_truth', 'Unknown')
+                
+                complexity_types[complexity_type] = complexity_types.get(complexity_type, 0) + 1
+                
+                if complexity_type == 'TIME':
+                    time_complexities[ground_truth] = time_complexities.get(ground_truth, 0) + 1
+                elif complexity_type == 'SPACE':
+                    space_complexities[ground_truth] = space_complexities.get(ground_truth, 0) + 1
+            else:
+                # Old format with original complexities
+                time_comp = qa['metadata']['original_time_complexity']
+                space_comp = qa['metadata']['original_space_complexity']
+                
+                if time_comp:
+                    time_complexities[time_comp] = time_complexities.get(time_comp, 0) + 1
+                if space_comp:
+                    space_complexities[space_comp] = space_complexities.get(space_comp, 0) + 1
+        
+        if complexity_types:
+            print("\nComplexity type distribution:")
+            for comp_type, count in sorted(complexity_types.items()):
+                print(f"  {comp_type}: {count}")
+        
+        if time_complexities:
+            print("\nTime complexity distribution:")
+            for comp, count in sorted(time_complexities.items()):
+                print(f"  {comp}: {count}")
+        
+        if space_complexities:
+            print("\nSpace complexity distribution:")
+            for comp, count in sorted(space_complexities.items()):
+                print(f"  {comp}: {count}")
         
         print("\nDifficulty distribution:")
         for diff, count in sorted(difficulties.items()):

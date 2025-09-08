@@ -1,5 +1,5 @@
 prompt_template: |
-  Based on the following problem and solution, generate 1-3 diverse, challenging questions about algorithm complexity analysis along with comprehensive answers.
+  Based on the following problem and solution, generate 1-3 diverse, challenging queries about algorithm complexity analysis.
 
   **Problem Description**: {problem_description}
 
@@ -13,58 +13,52 @@ prompt_template: |
   - Space Complexity: {space_complexity}
   - Explanation: {explanation}
 
-  **Task**: Generate 1-3 challenging questions about this algorithm's complexity along with detailed answers. Each question should be:
-  1. **Diverse**: Choose from various question types (comparison, optimization, trade-offs, edge cases, variations, theoretical analysis, etc.)
-  2. **High difficulty**: Require deep understanding of complexity analysis
-  3. **Specific**: Focus on particular aspects of the algorithm
+  **Task**: Generate 1-3 challenging queries about this algorithm's complexity. Each query should:
+  1. **Be a complete, independent question**: The query must be self-contained and include all necessary context (problem description, code, etc.) so it can be understood without referring to external information
+  2. **Explicitly specify** whether it's asking for Time Complexity or Space Complexity analysis
+  3. **Be diverse**: Choose from various question types (comparison, optimization, trade-offs, edge cases, variations, theoretical analysis, etc.)
+  4. **Be challenging**: Require deep understanding of complexity analysis
+  5. **Be specific**: Focus on particular aspects of the algorithm
+  6. **Include the complete problem context**: Each query should contain the problem description and code within the question itself
 
-  **Question Types to Choose From**:
-  - Complexity comparison with alternative approaches
-  - Analysis of space-time trade-offs
-  - Best/average/worst case scenario analysis
-  - Impact of input characteristics on complexity
-  - Optimization possibilities and their complexity implications
-  - Recursive relation analysis
-  - Amortized complexity analysis
-  - Complexity under different constraints or modifications
-  - Memory access patterns and cache complexity
-  - Parallel/distributed complexity considerations
+  **Query Types to Choose From**:
+  - Time complexity analysis in different scenarios (best/average/worst case)
+  - Space complexity analysis including auxiliary space usage
+  - Time complexity comparison with alternative approaches
+  - Space complexity comparison with alternative approaches
+  - Time complexity under different input characteristics
+  - Space complexity under different input characteristics
+  - Time complexity of recursive relations
+  - Space complexity of recursive relations
+  - Amortized time complexity analysis
+  - Memory space complexity analysis
 
   **Output Format**:
-  ===QA_PAIRS_START===
-  ===PAIR_START===
-  PAIR_ID: 1
-  ===QUESTION_START===
-  [Your first challenging, specific question about complexity]
-  ===QUESTION_END===
-  ===ANSWER_START===
-  [Comprehensive answer with detailed analysis, including mathematical reasoning, examples if helpful, and clear explanation of complexity concepts]
-  ===ANSWER_END===
-  ===PAIR_END===
+  ===QUERIES_START===
+  ===QUERY_START===
+  QUERY_ID: 1
+  COMPLEXITY_TYPE: [TIME|SPACE]
+  QUERY: [A complete, independent question that includes: 1) The problem description, 2) The code solution, 3) A specific question about time/space complexity. The question should be self-contained and understandable without external context.]
+  GROUND_TRUTH: [Concise answer that directly answers the query - just the complexity notation without explanation]
+  ===QUERY_END===
 
-  ===PAIR_START===
-  PAIR_ID: 2
-  ===QUESTION_START===
-  [Your second challenging, specific question about complexity (if applicable)]
-  ===QUESTION_END===
-  ===ANSWER_START===
-  [Comprehensive answer with detailed analysis]
-  ===ANSWER_END===
-  ===PAIR_END===
+  ===QUERY_START===
+  ...
+  ===QUERY_END===
 
-  ===PAIR_START===
-  PAIR_ID: 3
-  ===QUESTION_START===
-  [Your third challenging, specific question about complexity (if applicable)]
-  ===QUESTION_END===
-  ===ANSWER_START===
-  [Comprehensive answer with detailed analysis]
-  ===ANSWER_END===
-  ===PAIR_END===
-  ===QA_PAIRS_END===
+  ===QUERY_START===
+  ...
+  ===QUERY_END===
+
+  ===QUERIES_END===
 
   **Requirements**:
-  - Generate 1-3 pairs based on the complexity and richness of the algorithm
-  - Each question should focus on different aspects of complexity analysis
-  - Questions should require deep algorithmic thinking and expert-level analysis
-  - Answers should be comprehensive and demonstrate mastery of complexity concepts
+  - Generate 1-3 queries based on the complexity and richness of the algorithm
+  - Each query must be a complete, independent question that includes the full problem description and code solution within the query itself
+  - Each query must explicitly ask for either "time complexity" or "space complexity"
+  - COMPLEXITY_TYPE must be either "TIME" or "SPACE" to indicate which complexity the query is asking about
+  - GROUND_TRUTH must be a concise answer that directly responds to the specific query without any explanation or analysis
+  - GROUND_TRUTH should be derived from the provided complexity information but tailored to answer the specific query
+  - Queries should require deep algorithmic thinking and expert-level analysis
+  - Each query should be self-contained and not rely on external context or references
+  - Focus on generating precise query-answer pairs
