@@ -78,6 +78,23 @@ responses = get_llm_responses_batch(
 )
 ```
 
+## 📊 数据资源
+
+本项目的可用数据集已发布在 Hugging Face Collections：
+
+🔗 **数据集链接**: [Code Synthetic RL Rollout Collection](https://huggingface.co/collections/aaabiao/code-synthetic-rl-rollout-68b9220c78768a27941a3f2c)
+
+该 Collection 包含了各种代码任务的基础数据，你可以：
+- 浏览已有的数据集格式作为参考
+- 有新需求可以直接 @郑天昱
+
+## 📋 任务文档
+
+详细的任务需求和开发指南请查看：
+
+🔗 **任务文档**: [Code Synthetic RL](https://bytedance.larkoffice.com/docx/C14PdjpiCoA4MPxNjcCcaKGYnqb)
+
+
 ## 📝 快速开始 - 基于示例学习
 
 ### 1. 环境配置
@@ -109,16 +126,16 @@ python reward_score/algo_complexity_pred.py
 
 **1. 创建任务目录结构**
 ```bash
-mkdir generation/your_task_name
-touch generation/your_task_name/__init__.py
-touch generation/your_task_name/main.py
+mkdir generation/[your_task_name]
+touch generation/[your_task_name]/__init__.py
+touch generation/[your_task_name]/main.py
 ```
 
-**2. 实现生成函数** (`generation/your_task_name/main.py`)
+**2. 实现生成函数** (`generation/[your_task_name]/main.py`)
 ```python
 from utils import register_forward, get_llm_responses_batch, read_yaml
 
-@register_forward("your_task_name")
+@register_forward("[your_task_name]")
 def forward(args):
     """
     参考 algo_complexity_pred/main.py 的实现模式
@@ -130,7 +147,7 @@ def forward(args):
     data = load_your_data(input_path)
     
     # 2. 读取 prompt 模板
-    template = read_yaml('your_task_name')
+    template = read_yaml('[your_task_name]')
     
     # 3. 准备 LLM prompts
     prompts = []
@@ -150,7 +167,7 @@ def forward(args):
     save_results(results, output_path)
 ```
 
-**3. 创建 prompt 模板** (`prompt/your_task_name.yaml`)
+**3. 创建 prompt 模板** (`prompt/[your_task_name].yaml`)
 ```yaml
 prompt_template: |
   Your task description here...
@@ -163,9 +180,9 @@ prompt_template: |
   [define your expected format]
 ```
 
-**4. 创建配置文件** (`config/your_task_name.yaml`)
+**4. 创建配置文件** (`config/[your_task_name].yaml`)
 ```yaml
-forward: your_task_name
+forward: [your_task_name]
 input_path: /path/to/your/input/data
 output_path: /path/to/your/output/data
 limit: 0  # 0 for no limit
@@ -177,11 +194,11 @@ llm: true
 
 参考 `reward_score/algo_complexity_pred.py`：
 
-**1. 创建评分器文件** (`reward_score/your_task_name.py`)
+**1. 创建评分器文件** (`reward_score/[your_task_name].py`)
 ```python
 from utils import register_reward_score
 
-@register_reward_score("your_task_name")
+@register_reward_score("[your_task_name]")
 def compute_score(solution_str, ground_truth, extra_info):
     """
     参考 algo_complexity_pred.py 的混合评分策略：
@@ -212,7 +229,7 @@ def compute_score(solution_str, ground_truth, extra_info):
         }
     }
 
-def test_your_task_name():
+def test_[your_task_name]():
     """添加测试用例"""
     test_cases = [
         ("input1", "expected1", 1.0),
@@ -224,7 +241,7 @@ def test_your_task_name():
         assert abs(result["score"] - expected) < 1e-6
 
 if __name__ == "__main__":
-    test_your_task_name()
+    test_[your_task_name]()
     print("All tests passed!")
 ```
 
@@ -232,10 +249,10 @@ if __name__ == "__main__":
 
 ```bash
 # 运行数据生成
-python generation.py --config_name your_task_name
+python generation.py --config_name [your_task_name]
 
 # 测试评分器
-python reward_score/your_task_name.py
+python reward_score/[your_task_name].py
 ```
 
 ## 📋 开发规范
