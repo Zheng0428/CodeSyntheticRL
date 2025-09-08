@@ -115,7 +115,7 @@ cp envs.py.example envs.py
 python generation.py --config_name algo_complexity_pred
 
 # 测试评分器
-python reward_score/algo_complexity_pred.py
+python tests/test_algo_complexity_pred.py
 ```
 
 ## 🛠️ 如何添加新任务
@@ -228,21 +228,43 @@ def compute_score(solution_str, ground_truth, extra_info):
             "details": "..."
         }
     }
+```
+
+**2. 创建测试文件** (`tests/test_[your_task_name].py`)
+```python
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from reward_score.[your_task_name] import compute_score
 
 def test_[your_task_name]():
-    """添加测试用例"""
+    """测试用例"""
     test_cases = [
-        ("input1", "expected1", 1.0),
-        ("input2", "expected2", 0.0),
+        ("correct_input", "expected_output", 1.0, "Correct case"),
+        ("wrong_input", "expected_output", 0.0, "Wrong case"),
+        ("", "expected_output", 0.0, "Empty input"),
     ]
     
-    for solution, ground_truth, expected in test_cases:
-        result = compute_score(solution, ground_truth, None)
-        assert abs(result["score"] - expected) < 1e-6
+    total_tests = len(test_cases)
+    passed_tests = 0
+    
+    for i, (solution_str, ground_truth, expected_score, description) in enumerate(test_cases, 1):
+        result = compute_score(solution_str, ground_truth, None)
+        actual_score = result["score"]
+        
+        if abs(actual_score - expected_score) < 1e-6:
+            print(f"Test {i}: ✓ PASS - {description}")
+            passed_tests += 1
+        else:
+            print(f"Test {i}: ✗ FAIL - {description}")
+            print(f"  Expected: {expected_score}, Got: {actual_score}")
+    
+    print(f"Results: {passed_tests}/{total_tests} passed")
+    return passed_tests == total_tests
 
 if __name__ == "__main__":
     test_[your_task_name]()
-    print("All tests passed!")
 ```
 
 ### Step 3: 运行你的任务
@@ -251,8 +273,8 @@ if __name__ == "__main__":
 # 运行数据生成
 python generation.py --config_name [your_task_name]
 
-# 测试评分器
-python reward_score/[your_task_name].py
+# 运行测试
+python tests/test_[your_task_name].py
 ```
 
 ## 📋 开发规范
@@ -281,22 +303,24 @@ python reward_score/[your_task_name].py
 
 ## 🧪 测试和验证
 
-每个新任务都应该包含测试：
+每个新任务都应该包含独立的测试文件：
 
-```python
-# 在评分器文件中添加测试
-def test_your_scorer():
-    # 正确案例
-    result = compute_score("correct_answer", "ground_truth", None)
-    assert result["score"] == 1.0
-    
-    # 错误案例
-    result = compute_score("wrong_answer", "ground_truth", None)
-    assert result["score"] == 0.0
+```bash
+# 运行具体任务的测试
+python tests/test_algo_complexity_pred.py
 
-if __name__ == "__main__":
-    test_your_scorer()
+# 运行你的任务测试
+python tests/test_[your_task_name].py
+
+# 使用 unittest 运行
+python -m unittest tests.test_algo_complexity_pred -v
 ```
+
+**测试文件结构：**
+- 测试文件放在 `tests/` 目录下
+- 命名格式：`test_[task_name].py`
+- 包含完整的测试用例和边界情况
+- 提供清晰的测试结果输出
 
 ## 📊 项目状态
 
