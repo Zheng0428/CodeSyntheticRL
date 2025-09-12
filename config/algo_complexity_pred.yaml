@@ -2,9 +2,9 @@ forward: algo_complexity_pred
 reward_score: algo_complexity_pred
 complexity_data: /mnt/hdfs/tiktok_aiic_new/user/tianyu/opencoder/dataset/complexity.json
 input_path: /mnt/hdfs/tiktok_aiic_new/user/tianyu/opencoder/dataset/merged_leetcode.jsonl
-output_path: /mnt/hdfs/tiktok_aiic_new/user/tianyu/opencoder/dataset/algo_complexity_pred.jsonl
+output_path: ./dataset/algo_complexity_pred.jsonl
 
-limit: 100
+limit: 50
 llm: true
 max_retries: 3
 format: json

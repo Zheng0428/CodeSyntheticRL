@@ -86,7 +86,7 @@ responses = get_llm_responses_batch(
 
 该 Collection 包含了各种代码任务的基础数据，你可以：
 - 浏览已有的数据集格式作为参考
-- 有新需求可以直接 @郑天昱
+- 有新需求可以直接 @郑天昱 @杜雅欣
 
 ## 📋 任务文档
 
@@ -185,7 +185,7 @@ prompt_template: |
 forward: [your_task_name]
 input_path: /path/to/your/input/data
 output_path: /path/to/your/output/data
-limit: 0  # 0 for no limit
+limit: 50  # 0 for no limit, 50 for sample data number
 llm: true
 # 其他自定义参数
 ```
@@ -364,7 +364,7 @@ python -m unittest tests.test_algo_complexity_pred -v
 #### 格式示例
 
 ```json
-{"task_id": "complexity_001", "question": "分析以下算法的时间复杂度：def binary_search(arr, target)...", "reward": {"ground_truth": "O(log n)", "style": "rule"}, "data_source": "leetcode", "repo_name": "algorithm_analysis", "extra_info": {"difficulty": "medium", "topic": "binary_search"}}
+{"task_id": "complexity_001", "question": "分析以下算法的时间复杂度：def binary_search(arr, target)...", "reward": {"ground_truth": "O(log n)", "style": "rule"}, "data_source": "oc_leetcode", "repo_name": "", "extra_info": {"difficulty": "medium", "topic": "binary_search"}}
 {"task_id": "generation_002", "question": "实现一个快速排序算法", "reward": {"ground_truth": "correct_implementation", "style": "interpreter"}, "data_source": "custom", "repo_name": "code_generation", "extra_info": {"language": "python", "test_cases": 5}}
 {"task_id": "review_003", "question": "评估以下代码的质量和改进建议", "reward": {"ground_truth": "high_quality_review", "style": "model"}, "data_source": "github", "repo_name": "code_review", "extra_info": {"stars": 1000, "contributors": 50}}
 ```
@@ -388,6 +388,39 @@ python -m unittest tests.test_algo_complexity_pred -v
 python tests/validate_format.py /path/to/your/data.jsonl
 ```
 
+### 样本数据要求
+
+每个任务需要在 `./dataset/` 目录中提供样本数据文件用于验证：
+
+- **文件位置**: `./dataset/{task_id}.jsonl`
+- **数据长度**: 50条记录
+- **用途**: 格式验证和功能测试
+- **命名规范**: 必须与任务的 `task_id` 保持一致
+
+#### 示例
+
+```bash
+# 算法复杂度预测任务的样本数据
+./dataset/algo_complexity_pred.jsonl  # 包含50条符合格式的数据
+
+# 新任务的样本数据
+./dataset/your_task_name.jsonl        # 包含50条符合格式的数据
+```
+
+#### 样本数据生成方式
+
+1. **运行数据生成任务**（限制为50条）：
+   ```bash
+   python generation.py --config_name your_task_name
+   ```
+
+2. **手动验证数据格式**：
+   ```bash
+   python tests/validate_format.py ./dataset/your_task_name.jsonl
+   ```
+
+3. **确保数据质量**：样本数据应覆盖任务的主要场景和边界情况
+
 ## 📊 项目状态
 
 ### 已完成的任务示例
@@ -398,11 +431,89 @@ python tests/validate_format.py /path/to/your/data.jsonl
 
 ## 🤝 协作指南
 
-1. **Fork 项目**：创建你的分支进行开发
-2. **遵循示例**：严格按照 `algo_complexity_pred` 的模式实现
-3. **测试充分**：确保你的评分器通过所有测试用例
-4. **文档清晰**：为你的任务添加清晰的说明
-5. **提交 PR**：完成后提交 Pull Request
+### 任务开发流程
+
+#### 1. 创建开发分支
+```bash
+# 基于main分支创建新的任务分支
+git checkout main
+git pull origin main
+git checkout -b task/{task_name}
+```
+
+#### 2. 开发实现
+1. **遵循示例**：严格按照 `algo_complexity_pred` 的模式实现
+2. **创建任务文件**：
+   - `generation/{task_name}/main.py` - 数据生成逻辑
+   - `reward_score/{task_name}.py` - 评分器实现
+   - `prompt/{task_name}.yaml` - 提示模板
+   - `config/{task_name}.yaml` - 任务配置
+   - `tests/test_{task_name}.py` - 测试用例
+
+#### 3. 测试验证
+```bash
+# 生成样本数据（50条）
+python generation.py --config_name {task_name}
+
+# 验证数据格式
+python tests/validate_format.py ./dataset/{task_name}.jsonl
+
+# 运行评分器测试
+python tests/test_{task_name}.py
+
+# 确保所有测试通过
+```
+
+#### 4. 提交代码
+```bash
+# 添加所有变更
+git add .
+
+# 提交代码
+git commit -m "feat: implement {task_name} task xxxx"
+
+# 推送分支
+git push origin {task_name}
+```
+
+#### 5. 创建Pull Request
+```bash
+# 使用GitHub CLI创建PR
+gh pr create --title "feat: implement {task_name} task" --body "
+## 📋 任务概述
+实现 {task_name} 任务的完整功能模块
+
+## ✅ 完成内容
+- [x] 数据生成逻辑 (`generation/{task_name}/main.py`)
+- [x] 混合评分策略 (`reward_score/{task_name}.py`) 
+- [x] 提示模板 (`prompt/{task_name}.yaml`)
+- [x] 任务配置 (`config/{task_name}.yaml`)
+- [x] 测试用例 (`tests/test_{task_name}.py`)
+- [x] 样本数据 (`dataset/{task_name}.jsonl`) - 50条记录
+- [x] 格式验证通过
+
+## 🧪 测试结果
+- 数据格式验证: ✅ 通过
+- 评分器测试: ✅ 通过  
+- 样本生成: ✅ 50条记录
+
+## 📊 数据统计
+- 总样本数: 50
+- 格式符合率: 100%
+- 评分器准确率: XX%
+
+请 @郑天昱 @杜雅欣 进行代码审核
+"
+```
+
+#### 6. 任务完成标准
+✅ **任务视为完成的条件**:
+- [ ] PR已创建并包含完整描述
+- [ ] 所有测试用例通过
+- [ ] 数据格式验证通过
+- [ ] 代码审核通过
+- [ ] 成功Merge到main分支
+
 
 ## ⚠️ 重要提醒
 
@@ -410,14 +521,9 @@ python tests/validate_format.py /path/to/your/data.jsonl
 - 严格遵循 `forward` 和 `compute_score` 的函数签名
 - LLM 调用需要配置正确的 API 密钥
 - 大规模数据处理时注意内存和API限制
-- 定期运行测试确保功能正常
 
 ## 📚 更多信息
 
 - **数据处理工具**：详见 `./data_process/README.md`
-- **沙箱使用**：详见 `./sandbox/README.md`
+- **sandbox使用**：详见 `./sandbox/README.md`
 - **示例代码**：参考 `generation/algo_complexity_pred/` 和 `reward_score/algo_complexity_pred.py`
-
----
-
-**开始开发你的第一个任务吧！** 🚀
