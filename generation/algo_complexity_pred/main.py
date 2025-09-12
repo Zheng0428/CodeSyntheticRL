@@ -170,14 +170,20 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
             basic_answer = f"**Time Complexity**: {complexity_info_data.get('time_complexity', '')}\n**Space Complexity**: {complexity_info_data.get('space_complexity', '')}\n\n**Explanation**: {complexity_info_data.get('explanation', '')}"
             
             qa_pair = {
-                "id": f"complexity_{question_id}_basic",
-                "question_id": int(question_id),
-                "task_id": leetcode_item.get('task_id', ''),
-                "difficulty": leetcode_item.get('difficulty', ''),
-                "tags": leetcode_item.get('tags', []),
+                "task_id": "algo_complexity_pred",
                 "question": basic_question,
-                "answer": basic_answer,
-                "metadata": {
+                "reward": {
+                    "ground_truth": basic_answer,
+                    "style": "model"
+                },
+                "data_source": "oc_leetcode",
+                "repo_name": "",
+                "extra_info": {
+                    "id": f"complexity_{question_id}_basic",
+                    "question_id": int(question_id),
+                    "leetcode_task_id": leetcode_item.get('task_id', ''),
+                    "difficulty": leetcode_item.get('difficulty', ''),
+                    "tags": leetcode_item.get('tags', []),
                     "type": "algorithm_complexity_prediction",
                     "pair_id": "basic",
                     "problem_description": problem_description,
@@ -222,18 +228,23 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
                     
                     for parsed_query in parsed_queries:
                         qa_pair = {
-                            "id": f"complexity_{question_id}_{parsed_query['query_id']}",
-                            "question_id": int(question_id),
-                            "task_id": leetcode_item.get('task_id', ''),
-                            "difficulty": leetcode_item.get('difficulty', ''),
-                            "tags": leetcode_item.get('tags', []),
+                            "task_id": "algo_complexity_pred",
                             "question": parsed_query['query'],
-                            "answer": parsed_query['ground_truth'],
-                            "metadata": {
+                            "reward": {
+                                "ground_truth": parsed_query['ground_truth'],
+                                "style": "model"
+                            },
+                            "data_source": "oc_leetcode",
+                            "repo_name": "",
+                            "extra_info": {
+                                "id": f"complexity_{question_id}_{parsed_query['query_id']}",
+                                "question_id": int(question_id),
+                                "leetcode_task_id": leetcode_item.get('task_id', ''),
+                                "difficulty": leetcode_item.get('difficulty', ''),
+                                "tags": leetcode_item.get('tags', []),
                                 "type": "algorithm_complexity_prediction",
                                 "query_id": parsed_query['query_id'],
                                 "complexity_type": parsed_query['complexity_type'],
-                                "ground_truth": parsed_query['ground_truth'],
                                 "problem_description": problem_description,
                                 "code": code,
                                 "original_time_complexity": complexity_info_data.get('time_complexity', ''),
@@ -252,10 +263,11 @@ def generate_qa_pairs(complexity_data_file=None, leetcode_file=None, output_file
     if qa_pairs:
         print("\nExample QA pair:")
         print("=" * 80)
-        print(f"Question ID: {qa_pairs[0]['question_id']}")
         print(f"Task ID: {qa_pairs[0]['task_id']}")
+        print(f"Data Source: {qa_pairs[0]['data_source']}")
         print(f"Question: {qa_pairs[0]['question'][:200]}...")
-        print(f"Answer: {qa_pairs[0]['answer'][:200]}...")
+        print(f"Ground Truth: {qa_pairs[0]['reward']['ground_truth'][:200]}...")
+        print(f"Style: {qa_pairs[0]['reward']['style']}")
         print("=" * 80)
     
     print(f"Generated {len(qa_pairs)} QA pairs")
@@ -324,14 +336,15 @@ def forward(args):
         difficulties = {}
         
         for qa in qa_pairs:
-            difficulty = qa.get('difficulty', 'Unknown')
+            extra_info = qa.get('extra_info', {})
+            difficulty = extra_info.get('difficulty', 'Unknown')
             difficulties[difficulty] = difficulties.get(difficulty, 0) + 1
             
-            # Handle both old format (basic template) and new format (LLM generated)
-            if qa['metadata'].get('llm_generated', False):
-                # New format with complexity_type and ground_truth
-                complexity_type = qa['metadata'].get('complexity_type', 'Unknown')
-                ground_truth = qa['metadata'].get('ground_truth', 'Unknown')
+            # Handle both basic template and LLM generated
+            if extra_info.get('llm_generated', False):
+                # LLM generated format with complexity_type and ground_truth
+                complexity_type = extra_info.get('complexity_type', 'Unknown')
+                ground_truth = qa['reward']['ground_truth']
                 
                 complexity_types[complexity_type] = complexity_types.get(complexity_type, 0) + 1
                 
@@ -340,9 +353,9 @@ def forward(args):
                 elif complexity_type == 'SPACE':
                     space_complexities[ground_truth] = space_complexities.get(ground_truth, 0) + 1
             else:
-                # Old format with original complexities
-                time_comp = qa['metadata']['original_time_complexity']
-                space_comp = qa['metadata']['original_space_complexity']
+                # Basic template format with original complexities
+                time_comp = extra_info.get('time_complexity', '')
+                space_comp = extra_info.get('space_complexity', '')
                 
                 if time_comp:
                     time_complexities[time_comp] = time_complexities.get(time_comp, 0) + 1

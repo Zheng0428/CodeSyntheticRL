@@ -322,6 +322,72 @@ python -m unittest tests.test_algo_complexity_pred -v
 - 包含完整的测试用例和边界情况
 - 提供清晰的测试结果输出
 
+## 📋 标准化输出格式规范
+
+### 强化学习训练数据格式
+
+所有任务的输出数据必须遵循统一的JSONL格式，每行包含以下标准化字段：
+
+```json
+{
+  "task_id": "string",
+  "question": "string", 
+  "reward": {
+    "ground_truth": "string",
+    "style": "rule|model|interpreter"
+  },
+  "data_source": "string",
+  "repo_name": "string",
+  "extra_info": {}
+}
+```
+
+#### 字段说明
+
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| `task_id` | string | ✅ | 任务的唯一标识符 |
+| `question` | string | ✅ | 完整的问题描述或指令 |
+| `reward` | object | ✅ | 奖励评分相关信息 |
+| `reward.ground_truth` | string | ✅ | 标准答案或预期输出 |
+| `reward.style` | string | ✅ | 评分方式，仅限：`rule`/`model`/`interpreter` |
+| `data_source` | string | ✅ | 数据来源标识 |
+| `repo_name` | string | ✅ | 所属仓库名称 |
+| `extra_info` | object | ✅ | 额外信息字典，用于存放其他格式化数据 |
+
+#### 评分方式说明
+
+- **`rule`**: 基于规则的评分方式，通过预定义规则进行评估
+- **`model`**: 基于模型的评分方式，使用LLM进行判断评估  
+- **`interpreter`**: 基于解释器的评分方式，通过代码执行结果评估
+
+#### 格式示例
+
+```json
+{"task_id": "complexity_001", "question": "分析以下算法的时间复杂度：def binary_search(arr, target)...", "reward": {"ground_truth": "O(log n)", "style": "rule"}, "data_source": "leetcode", "repo_name": "algorithm_analysis", "extra_info": {"difficulty": "medium", "topic": "binary_search"}}
+{"task_id": "generation_002", "question": "实现一个快速排序算法", "reward": {"ground_truth": "correct_implementation", "style": "interpreter"}, "data_source": "custom", "repo_name": "code_generation", "extra_info": {"language": "python", "test_cases": 5}}
+{"task_id": "review_003", "question": "评估以下代码的质量和改进建议", "reward": {"ground_truth": "high_quality_review", "style": "model"}, "data_source": "github", "repo_name": "code_review", "extra_info": {"stars": 1000, "contributors": 50}}
+```
+
+### 格式验证
+
+在实现新任务时，请确保：
+
+1. **严格遵循字段规范**: 所有必填字段必须存在且类型正确
+2. **reward.style值限制**: 只能使用 `rule`、`model`、`interpreter` 三种类型
+3. **JSONL格式**: 每行一个完整的JSON对象，文件以`.jsonl`为扩展名
+4. **编码格式**: 使用UTF-8编码，支持中文字符
+5. **字段一致性**: 同一任务类型的数据格式应保持一致
+
+### 格式验证工具
+
+项目提供了数据格式检测脚本，用于验证JSONL文件是否符合标准格式：
+
+```bash
+# 验证数据格式
+python tests/validate_format.py /path/to/your/data.jsonl
+```
+
 ## 📊 项目状态
 
 ### 已完成的任务示例
