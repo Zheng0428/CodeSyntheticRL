@@ -1,0 +1,6 @@
+forward: readme_gen
+reward_score: readme_gen
+input_path: data/input/gitrepo_5
+output_path: data/output/readme_gen/readme_gen_qa.json
+
+format: json

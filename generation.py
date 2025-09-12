@@ -23,6 +23,7 @@ def main():
     
     # 动态调用对应的 forward 函数
     forward_func = _forward_registry[config['forward']]
+    print
     forward_func(config)
 
 
