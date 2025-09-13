@@ -1,0 +1,4 @@
+prompt_template: |
+  Generate a README for a repository with the following structure and contents:
+  
+  {folder_info}
