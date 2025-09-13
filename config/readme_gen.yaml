@@ -1,0 +1,7 @@
+forward: readme_gen
+reward_score: readme_gen
+input_path: /mnt/hdfs/tiktok_aiic_new/user/codeai_new/unzip_code_repo_batch/tmp_repo_0
+output_path: data/output/readme_gen/readme_gen_qa.jsonl
+
+limit: 50  # 0 for no limit
+max_token: 10000000 # max token for each sample input
